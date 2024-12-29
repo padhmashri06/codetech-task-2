@@ -1,4 +1,4 @@
-![Screenshot (57)](https://github.com/user-attachments/assets/0811ed3e-3368-4a19-bef6-d25dc36e1109)NAME: PADHMASHRI KA
+NAME: PADHMASHRI KA
 COMPANY: CODTECH IT SOLUTION 
 ID:CT08FTN
 DOMAIN: FULL STACK WEB DEVELOPER
@@ -145,8 +145,6 @@ JWT is used for user authentication. After logging in, the user gets a token tha
 
 
 
-
-
-[Uploading Screenshot (57).png…]()
+![Screenshot (57)](https://github.com/user-attachments/assets/0811ed3e-3368-4a19-bef6-d25dc36e1109)
 ![Screenshot (58)](https://github.com/user-attachments/assets/0dc3cbc2-f789-416f-a059-41b988fdadd5)
 
