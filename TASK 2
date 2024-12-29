@@ -1,0 +1,227 @@
+FRONTEND:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Sharing Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form { background: PINK; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); margin-bottom: 20px; }
+        .form div { margin-bottom: 10px; }
+        .form label { font-weight: bold; }
+        .form input, .form textarea { width: 100%; padding: 8px; border: 1px solid black; border-radius: 4px; }
+        .form button { background-color: plum; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .form button:hover { background-color: palevioletred; }
+        .recipe { background: plum; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); margin-bottom: 15px; }
+        .recipe button { background-color: red; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .recipe button:hover { background-color: darkred; }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <h1>Recipe Sharing Platform</h1>
+
+        <!-- Register/Login Form -->
+        <div v-if="!loggedIn">
+            <div class="form">
+                <h2>Register</h2>
+                <div><label>Username:</label><input v-model="registerData.username" required></div>
+                <div><label>Email:</label><input v-model="registerData.email" required></div>
+                <div><label>Password:</label><input v-model="registerData.password" type="password" required></div>
+                <button @click="register">Register</button>
+            </div>
+
+            <div class="form">
+                <h2>Login</h2>
+                <div><label>Email:</label><input v-model="loginData.email" required></div>
+                <div><label>Password:</label><input v-model="loginData.password" type="password" required></div>
+                <button @click="login">Login</button>
+            </div>
+        </div>
+
+        <!-- Recipe Form -->
+        <div v-if="loggedIn">
+            <div class="form">
+                <h2>Create Recipe</h2>
+                <div><label>Title:</label><input v-model="recipeData.title" required></div>
+                <div><label>Ingredients:</label><textarea v-model="recipeData.ingredients" required></textarea></div>
+                <div><label>Instructions:</label><textarea v-model="recipeData.instructions" required></textarea></div>
+                <button @click="addRecipe">Add Recipe</button>
+            </div>
+
+            <!-- Recipe List -->
+            <h2>Recipes</h2>
+            <div v-for="recipe in recipes" :key="recipe.id" class="recipe">
+                <h3>{{ recipe.title }}</h3>
+                <p><strong>Ingredients:</strong> {{ recipe.ingredients }}</p>
+                <p><strong>Instructions:</strong> {{ recipe.instructions }}</p>
+                <button @click="deleteRecipe(recipe.id)">Delete</button>
+                <button @click="editRecipe(recipe)">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    loggedIn: false,
+                    token: '',
+                    recipes: [],
+                    recipeData: { title: '', ingredients: '', instructions: '' },
+                    registerData: { username: '', email: '', password: '' },
+                    loginData: { email: '', password: '' }
+                };
+            },
+            methods: {
+                async register() {
+                    await fetch('http://localhost:5000/api/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.registerData)
+                    });
+                    alert('User registered successfully!');
+                },
+                async login() {
+                    const res = await fetch('http://localhost:5000/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.loginData)
+                    });
+                    const data = await res.json();
+                    this.token = data.token;
+                    this.loggedIn = true;
+                    this.fetchRecipes();
+                },
+                async fetchRecipes() {
+                    const res = await fetch('http://localhost:5000/api/recipes', {
+                        headers: { Authorization: Bearer ${this.token} }
+                    });
+                    this.recipes = await res.json();
+                },
+                async addRecipe() {
+                    await fetch('http://localhost:5000/api/recipes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: Bearer ${this.token} },
+                        body: JSON.stringify(this.recipeData)
+                    });
+                    this.recipeData = { title: '', ingredients: '', instructions: '' };
+                    this.fetchRecipes();
+                },
+                async deleteRecipe(id) {
+                    await fetch(http://localhost:5000/api/recipes/${id}, {
+                        method: 'DELETE',
+                        headers: { Authorization: Bearer ${this.token} }
+                    });
+                    this.fetchRecipes();
+                },
+                async editRecipe(recipe) {
+                    this.recipeData = { ...recipe };
+                    await fetch(http://localhost:5000/api/recipes/${recipe.id}, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', Authorization: Bearer ${this.token} },
+                        body: JSON.stringify(this.recipeData)
+                    });
+                    this.fetchRecipes();
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+
+
+BACKEND:
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const app = express();
+
+// Middleware
+app.use(bodyParser.json());
+app.use(cors());
+
+// In-memory storage
+let users = [];
+let recipes = [];
+const SECRET_KEY = 'your_secret_key';  // Use a stronger secret in production
+
+// Authentication middleware
+const authenticate = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err) return res.status(403).json({ message: 'Forbidden' });
+        req.user = user;
+        next();
+    });
+};
+
+// Register user
+app.post('/api/register', async (req, res) => {
+    const { username, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = { id: users.length + 1, username, email, password: hashedPassword };
+    users.push(newUser);
+    res.status(201).json({ message: 'User registered successfully!' });
+});
+
+// Login user
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+    const user = users.find(u => u.email === email);
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+    res.json({ token, username: user.username });
+});
+
+// Create Recipe
+app.post('/api/recipes', authenticate, (req, res) => {
+    const { title, ingredients, instructions } = req.body;
+    const newRecipe = { id: recipes.length + 1, title, ingredients, instructions, author: req.user.username };
+    recipes.push(newRecipe);
+    res.status(201).json(newRecipe);
+});
+
+// Get all recipes
+app.get('/api/recipes', authenticate, (req, res) => {
+    res.json(recipes);
+});
+
+// Update recipe
+app.put('/api/recipes/:id', authenticate, (req, res) => {
+    const { id } = req.params;
+    const { title, ingredients, instructions } = req.body;
+    const recipe = recipes.find(r => r.id === parseInt(id));
+    if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+
+    recipe.title = title || recipe.title;
+    recipe.ingredients = ingredients || recipe.ingredients;
+    recipe.instructions = instructions || recipe.instructions;
+
+    res.json(recipe);
+});
+
+// Delete recipe
+app.delete('/api/recipes/:id', authenticate, (req, res) => {
+    const { id } = req.params;
+    const index = recipes.findIndex(r => r.id === parseInt(id));
+    if (index === -1) return res.status(404).json({ message: 'Recipe not found' });
+
+    recipes.splice(index, 1);
+    res.status(204).end();
+});
+
+// Start server
+const PORT = 5000;
+app.listen(PORT, () => console.log(Server running at http://localhost:${PORT}))
