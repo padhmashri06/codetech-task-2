@@ -1,4 +1,4 @@
-NAME: PADHMASHRI KA
+![Screenshot (57)](https://github.com/user-attachments/assets/0811ed3e-3368-4a19-bef6-d25dc36e1109)NAME: PADHMASHRI KA
 COMPANY: CODTECH IT SOLUTION 
 ID:CT08FTN
 DOMAIN: FULL STACK WEB DEVELOPER
@@ -14,6 +14,9 @@ Share recipes, including a title, ingredients, and instructions.
 View, update, and delete their own recipes.
 
 Save and manage their recipe collection in a user-friendly environment.
+
+
+
 
 
 The application is built using Vue.js for the frontend (UI) and Express.js for the backend (server-side). The JWT (JSON Web Tokens) authentication mechanism is used to handle user authentication and secure the API endpoints.
@@ -139,3 +142,11 @@ It also serves static files from the public directory, which contains the Vue.js
 3. JWT (JSON Web Token):
 
 JWT is used for user authentication. After logging in, the user gets a token that must be included in the headers of future API request…
+
+
+
+
+
+[Uploading Screenshot (57).png…]()
+![Screenshot (58)](https://github.com/user-attachments/assets/0dc3cbc2-f789-416f-a059-41b988fdadd5)
+
